@@ -3,3 +3,4 @@ vendor
 Gemfile.lock
 .idea
 resource
+.DS_Store
