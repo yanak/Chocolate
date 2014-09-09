@@ -1,4 +1,5 @@
 require 'chocolate/model/fwrs_db_dao'
+require 'chocolate/sy_config'
 require 'mysql'
 
 class FwrsDaoFactory
@@ -11,8 +12,12 @@ class FwrsDaoFactory
     private
 
     def get_data_source
-      # TODO get settings from yaml
-      return Mysql::new()
+      config = load_db_config
+      return Mysql::new(config['host'], config['user'], config['password'], config['db_name'])
+    end
+
+    def load_db_config
+      return SyConfig.new('database').load
     end
   end
 

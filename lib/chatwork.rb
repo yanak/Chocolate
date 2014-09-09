@@ -1,3 +1,4 @@
+require 'chocolate/sy_config'
 require 'net/https'
 require 'zlib'
 require 'uri'
@@ -40,6 +41,9 @@ class Chat
         #'X-NewRelic-ID' => 'VwYDUFBbGwEIUVFUAwE=',
         #'X-Requested-With' => 'XMLHttpRequest',
     }
+
+    @user_info = SyConfig.new('user_info').load
+
   end
 
   def connect
@@ -47,11 +51,65 @@ class Chat
     @access_token_ = access_token
   end
 
+  def get_query_string
+    query = {
+        :cmd => 'load_chat',
+        :myid => @user_info['uid'],
+        :_v => '1.80a',
+        :_av => 4,
+        :_t => @access_token_,
+        :ln => 'ja',
+        :room_id => @user_info['room_id'],
+        :last_chat_id => 0,
+        :first_chat_id => 0,
+        :jump_to_chat_id => 0,
+        :unread_num => 0,
+        :file => 1,
+        :task => 1,
+        :desc => 1,
+        :_ => 1409976119945,
+    }
+
+    parameter = query.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
+  def login_query_string
+    query = {
+        :lang => 'ja',
+    :s => @user_info['company'],
+
+    }
+
+    parameter = query.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
+  def login_post_body
+    body = {
+        :email => @user_info['email'],
+        :password => @user_info['password'],
+        :login => 'ログイン',
+    }
+
+    parameter = body.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
   # retrieve my chat list
   # @param [Int] from the retrieve second that between a latest message and old messages
   #
   def chat_list(from = 10)
-    uri = "/#{@get_url}?cmd=load_chat&myid=712724&_v=1.80a&_av=4&_t=#{@access_token_}&ln=ja&room_id=12407368&last_chat_id=0&first_chat_id=0&jump_to_chat_id=0&unread_num=0&file=1&task=1&desc=1&_=1409976119945"
+    uri = "/#{@get_url}?#{login_query_string}"
     lists = []
     @https_.start do
       body = @https_.get(uri, @get_header_).body
@@ -86,9 +144,8 @@ class Chat
   def cookie
     response = ''
     @https_.start do
-      #p https.head '/login.php?lang=ja&s=h', "email=#{@mail}&password=#{@password}&login=ログイン"
-      #response = https.post('/login.php?lang=ja&s=', "email=#{@mail}&password=#{@password}&login=ログイン")
-      response = @https_.post('/login.php?lang=ja&s=', "email=&password=&login=%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3", @post_header_)
+      #response = @https_.post("/login.php?lang=ja&s=#{@user_info['company']}", "email=#{@user_info['email']}&password=#{@user_info['password']}&login=%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3", @post_header_)
+      response = @https_.post("/login.php?#{login_query_string}", login_post_body, @post_header_)
     end
 
     fields = response.get_fields('Set-Cookie').map do |field|

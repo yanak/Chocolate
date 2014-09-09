@@ -1,0 +1,20 @@
+# Database settings to looking master tables
+database:
+  host:
+  user:
+  password:
+  db_name:
+
+# ChatWork initialize settings
+user_info:
+  # Your email to login ChatWork
+  email:
+  # Your password to login ChatWork
+  password:
+  # Company ID
+  company:
+  # Your user ID
+  uid:
+  # Room ID to observing messages
+  room_id:
+
