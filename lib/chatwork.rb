@@ -31,7 +31,7 @@ class Chat
 
     @get_header_ = {
         'Accept' => 'application/json, text/javascript, */*; q=0.01',
-        'Accept-Encoding' => 'UTF-8,gzip,deflate,sdch',
+        'Accept-Encoding' => 'gzip,deflate,sdch',
         'Accept-Language' => 'ja,en-US;q=0.8',
         'Cache-Control' => 'no-cache',
         'Pragma' => 'no-cache',
@@ -80,8 +80,7 @@ class Chat
   def login_query_string
     query = {
         :lang => 'ja',
-    :s => @user_info['company'],
-
+        :s => @user_info['company'],
     }
 
     parameter = query.map do |k,v|
@@ -109,7 +108,7 @@ class Chat
   # @param [Int] from the retrieve second that between a latest message and old messages
   #
   def chat_list(from = 10)
-    uri = "/#{@get_url}?#{login_query_string}"
+    uri = "/#{@get_url}?#{get_query_string}"
     lists = []
     @https_.start do
       body = @https_.get(uri, @get_header_).body
