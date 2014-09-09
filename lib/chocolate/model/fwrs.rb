@@ -1,4 +1,4 @@
-class FwrsDao
+class Fwrs
 
   def initialize(data_source)
     @data_source = data_source

@@ -1,12 +1,12 @@
-require 'chocolate/model/fwrs_db_dao'
+require 'chocolate/model/fwrs_db'
 require 'chocolate/sy_config'
 require 'mysql'
 
-class FwrsDaoFactory
+class FwrsFactory
 
   class << self
-    def create_fwrs_dao
-      return FwrsDbDao.new(get_data_source)
+    def create_fwrs
+      return FwrsDb.new(get_data_source)
     end
 
     private

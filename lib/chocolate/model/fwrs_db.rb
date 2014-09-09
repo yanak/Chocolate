@@ -1,6 +1,6 @@
-require 'chocolate/model/fwrs_dao'
+require 'chocolate/model/fwrs'
 
-class FwrsDbDao < FwrsDao
+class FwrsDb < Fwrs
 
   def feature(id)
     statement = @data_source.prepare('SELECT * FROM feature WHERE id = ?')
