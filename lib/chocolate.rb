@@ -1,1 +1,1 @@
-require 'chocolate/fwrs_dao_factory'
+require 'chocolate/model_factory'
