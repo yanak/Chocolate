@@ -9,11 +9,12 @@ class Model
   # get feature info
   #
   # @param [int] feature id
-  def feature(id)
+  def noticeable(type)
   end
 
   def close
     @data_source.close
   end
+
 
 end
