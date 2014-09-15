@@ -1,1 +1,1 @@
-require 'chocolate/model_factory'
+require 'chocolate/option'
