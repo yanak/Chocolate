@@ -26,6 +26,7 @@ module Model
       fields = statement.execute
       features = []
       fields.each_hash do |field|
+        # FIXME 同じ日付を取ってくる場合がある（同じ値が配列に入る）
         features << {:id => field['id'], :title => field['title'], :notice_date => [field['from'].to_s, field['session_from'].to_s]}
       end
       return features

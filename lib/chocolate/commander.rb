@@ -1,11 +1,13 @@
 require 'singleton'
 require 'chocolate/observer'
+require 'chocolate/db_keeper'
+require 'chocolate/model/fwrs_factory'
 
 class Commander < Observer
   include Singleton
 
-  def initialize(subject)
-    @subject = subject
+  def initialize
+    #@subject = subject
   end
 
   def update
@@ -18,15 +20,14 @@ class Commander < Observer
 
   def get_future_master
     master = Model::FwrsFactory.new.create
-    features = master.find_future(:feature)
+    features = master.find_feature
 
-    features.each do |feature|
-      p id = feature[0]
-      p notice_date = feature[3].to_s
-      p title = feature[7]
+    db = DBKeeper.new
+    features.each do |f|
+      f[:notice_date].size.times do |i|
+        db.create('feature', f[:title], f[:id], 1, 0, f[:notice_date][i])
+      end
     end
-
-    m.close
   end
 
 end
