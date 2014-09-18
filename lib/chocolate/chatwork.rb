@@ -5,7 +5,7 @@ require 'uri'
 require 'json'
 require 'pp'
 
-class Chat
+class Chatwork
 
   def initialize
     @base_url = 'kcw.kddi.ne.jp'
