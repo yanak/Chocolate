@@ -1,13 +1,14 @@
 require 'rspec'
 require 'chocolate'
 
-describe 'create new model' do
+describe 'Fwrs master' do
   before {
-    @factory = ModelFactory.new('fwrs')
+    @factory = Model::FwrsFactory.new
+    @model = @factory.create
   }
 
-  describe 'create fwrs model' do
-    subject { @factory }
-    #it { is_expected.to }
+  describe 'find feature' do
+    subject { @model.find_feature.pop }
+    it { is_expected.to have_key(:id)}
   end
 end
