@@ -81,4 +81,38 @@ notice_date TEXT
     end
   end
 
+  def find_by_master_id(master_id)
+    begin
+      ps = @db.prepare("SELECT * FROM observations WHERE master_id = ?")
+      ps.bind_params(master_id)
+      return ps.execute
+    rescue => e
+      puts e
+    end
+  end
+
+  def find(type)
+    begin
+      if type == :all
+        ps = @db.prepare("SELECT * FROM observations")
+      elsif type == :notice_date
+        ps = @db.prepare("SELECT * FROM observations ORDER BY notice_date")
+      end
+      return ps.execute
+    rescue => e
+      puts e
+    end
+  end
+
+  def delete_old
+    now = DateTime.parse(Time.now.to_s).strftime('%Y-%m-%d %H:%M:%S')
+    begin
+      ps = @db.prepare("DELETE FROM observations WHERE notice_date <= ?")
+      ps.bind_params(now)
+      return ps.execute
+    rescue => e
+      puts e
+    end
+  end
+
 end
