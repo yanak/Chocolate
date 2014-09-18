@@ -3,6 +3,7 @@ require 'chocolate/model/model'
 
 module Model
 
+  # Fwrs master model
   class FwrsModel < Model
 
     def feature(id)
@@ -20,14 +21,24 @@ module Model
       return result
     end
 
+    # Find features
+    # @return [Array] {:id, :title, :notice}
     def find_feature
       now = DateTime.parse(Time.now.to_s).strftime('%Y-%m-%d %H:%M:%S')
       statement = @data_source.prepare("SELECT * FROM feature WHERE `from` >= '#{now}'")
       fields = statement.execute
       features = []
       fields.each_hash do |field|
-        # FIXME 同じ日付を取ってくる場合がある（同じ値が配列に入る）
-        features << {:id => field['id'], :title => field['title'], :notice_date => [field['from'].to_s, field['session_from'].to_s]}
+        # Unique from and session_from date
+        if field['from'] == field['session_from']
+          date = DateTime.parse(field['from'].to_s).strftime('%Y-%m-%d %H:%M:%S')
+          notice_date = [date]
+        else
+          date1 = DateTime.parse(field['from'].to_s).strftime('%Y-%m-%d %H:%M:%S')
+          date2 = DateTime.parse(field['session_from'].to_s).strftime('%Y-%m-%d %H:%M:%S')
+          notice_date = [date1, date2]
+        end
+        features << {master_id: field['id'], title: field['title'], notice_date: notice_date }
       end
       return features
     end
