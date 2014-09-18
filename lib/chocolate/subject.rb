@@ -1,12 +1,20 @@
 class Subject
 
-  def resisterObserver
+  def initialize
+    @observers = []
   end
 
-  def remoteObserver
+  def registerObserver(observer)
+    @observers << observer
+  end
+
+  def removeObserver
   end
 
   def notifyObservers
+    @observers.each do |observer|
+      observer.update(self)
+    end
   end
 
 end
