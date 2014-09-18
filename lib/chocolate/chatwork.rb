@@ -16,7 +16,9 @@ class Chatwork
     @password = ''
     @cookie_ = ''
     @access_token_ = ''
-    @https_ = create_https
+    @https_ = create_https(@base_url)
+    @api_https_ = create_https('api.chatwork.com')
+    @user_info = SyConfig.new('user_info').load
 
     @post_header_ = {
         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -42,73 +44,20 @@ class Chatwork
         #'X-Requested-With' => 'XMLHttpRequest',
     }
 
-    @user_info = SyConfig.new('user_info').load
+    @api_header_ = {
+        'X-ChatWorkToken' => @user_info['api_token']
+    }
 
-  end
-
-  def connect
     @get_header_['Cookie'] = cookie
     @access_token_ = access_token
+
   end
 
-  def get_query_string
-    query = {
-        :cmd => 'load_chat',
-        :myid => @user_info['uid'],
-        :_v => '1.80a',
-        :_av => 4,
-        :_t => @access_token_,
-        :ln => 'ja',
-        :room_id => @user_info['room_id'],
-        :last_chat_id => 0,
-        :first_chat_id => 0,
-        :jump_to_chat_id => 0,
-        :unread_num => 0,
-        :file => 1,
-        :task => 1,
-        :desc => 1,
-        :_ => 1409976119945,
-    }
-
-    parameter = query.map do |k,v|
-      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
-    end.join('&')
-
-    return parameter
-  end
-
-  def login_query_string
-    query = {
-        :lang => 'ja',
-    :s => @user_info['company'],
-
-    }
-
-    parameter = query.map do |k,v|
-      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
-    end.join('&')
-
-    return parameter
-  end
-
-  def login_post_body
-    body = {
-        :email => @user_info['email'],
-        :password => @user_info['password'],
-        :login => 'ログイン',
-    }
-
-    parameter = body.map do |k,v|
-      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
-    end.join('&')
-
-    return parameter
-  end
-
-  # retrieve my chat list
-  # @param [Int] from the retrieve second that between a latest message and old messages
+  # Retrieves messages in chat room
   #
-  def chat_list(from = 10)
+  # @param from [Integer] the retrieve second that between a latest message and old messages
+  # @return [Array] containing messages as Hash
+  def retrieve_messages(from = 10)
     uri = "/#{@get_url}?#{login_query_string}"
     lists = []
     @https_.start do
@@ -129,10 +78,24 @@ class Chatwork
     return new_message
   end
 
+  # Creates a message
+  #
+  # @param message [String]
+  # @return [String] status code
+  def create_message(message)
+    uri = "/v1/rooms/#{@user_info['room_id']}/messages?body=#{URI.encode(message)}"
+    response = ''
+    @api_https_.start do
+      response = @api_https_.post(uri, '', @api_header_)
+    end
+
+    return response.code
+  end
+
   private
 
-  def create_https
-    https = Net::HTTP.new(@base_url, 443)
+  def create_https(base_url)
+    https = Net::HTTP.new(base_url, 443)
     https.use_ssl = true
     https.ca_file = '../ca/cacert.pem'
     https.verify_mode = OpenSSL::SSL::VERIFY_PEER
@@ -187,13 +150,58 @@ class Chatwork
     return token
   end
 
+  def get_query_string
+    query = {
+        :cmd => 'load_chat',
+        :myid => @user_info['uid'],
+        :_v => '1.80a',
+        :_av => 4,
+        :_t => @access_token_,
+        :ln => 'ja',
+        :room_id => @user_info['room_id'],
+        :last_chat_id => 0,
+        :first_chat_id => 0,
+        :jump_to_chat_id => 0,
+        :unread_num => 0,
+        :file => 1,
+        :task => 1,
+        :desc => 1,
+        :_ => 1409976119945,
+    }
+
+    parameter = query.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
+  def login_query_string
+    query = {
+        :lang => 'ja',
+        :s => @user_info['company'],
+    }
+
+    parameter = query.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
+  def login_post_body
+    body = {
+        :email => @user_info['email'],
+        :password => @user_info['password'],
+        :login => 'ログイン',
+    }
+
+    parameter = body.map do |k,v|
+      URI.encode(k.to_s) + '=' + URI.encode(v.to_s)
+    end.join('&')
+
+    return parameter
+  end
+
 end
 
-c = Chat.new
-c.connect
-c.chat_list
-(1..10).each do |i|
-  pp c.chat_list
-  p i.to_s + ' times'
-  sleep(10)
-end
