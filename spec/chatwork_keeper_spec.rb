@@ -1,9 +1,13 @@
 require 'rspec'
+require 'chocolate/chatwork_keeper'
 
 describe 'message handling behaviour' do
+  before {
+    @cw = ChatworkKeeper.new
+  }
 
-  it 'should do something' do
-
-    true.should == false
+  describe 'retrieve message' do
+    subject { @cw }
   end
+
 end
