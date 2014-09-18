@@ -8,7 +8,7 @@ class SyConfig
 
   def load
     yml = nil
-    File.open('../config/config.yml', 'r') do |file|
+    File.open(File.expand_path('../../../config/config.yml', __FILE__), 'r') do |file|
       yml = Psych.load(file)
     end
 
