@@ -27,26 +27,25 @@ class ModelSubject < Subject
   def update_feature
     master = Model::FwrsFactory.new.create
     features = master.find_feature
+    master.close
 
+    # insert rows if master_id does not exist
+    # update rows if master_id exist
     db = DBKeeper.new
-    features.each do |f|
-
-      # insert rows if master_id does not exist
-      rows = db.find_by_master_id(f[:master_id])
-      row = rows.next_hash
-      if row.nil?
-        f[:notice_date].size.times do |i|
-          db.create('feature', f[:title], f[:master_id], 1, 0, f[:notice_date][i])
-        end
-      else
-        f[:notice_date].size.times do |i|
-          id = row['id']
-          db.update(id, f[:title], f[:notice_date][i])
+    features.each do |feature|
+      rows = db.find_by_master_id(feature[:master_id])
+      feature[:notice_date].each do |notice_date|
+        row = rows.next_hash
+        if row.nil?
+          db.create('feature', feature[:title], feature[:master_id], 1, 0, notice_date)
+        else
+          db.update(row['id'], feature[:title], notice_date)
         end
       end
     end
 
-    notifyObservers
+    #db.close
+    #notifyObservers
   end
 
 end
