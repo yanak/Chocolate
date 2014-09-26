@@ -22,6 +22,10 @@ notice_date TEXT
     end
   end
 
+  def close
+    @db.close unless @db.closed?
+  end
+
   # @param [FwrsModel]
   def create(type, name, master_id, active, as_task, notice_date)
     begin
@@ -34,10 +38,26 @@ notice_date TEXT
   end
 
   def update(id, name, notice_date)
+    row = find(id).next_hash
     begin
-      ps = @db.prepare("UPDATE observations SET name = ?, notice_date = ? WHERE id = ?")
-      ps.bind_params(name, notice_date, id)
-      return ps.execute
+      if row['type'] == 'user'
+
+        if !name.nil? && !notice_date.nil?
+          ps = @db.prepare("UPDATE observations SET name = ?, notice_date = ? WHERE id = ?")
+          ps.bind_params(name, notice_date, id)
+        elsif !name.nil?
+          ps = @db.prepare("UPDATE observations SET name = ? WHERE id = ?")
+          ps.bind_params(name, id)
+        elsif !notice_date.nil?
+          ps = @db.prepare("UPDATE observations SET notice_date = ? WHERE id = ?")
+          ps.bind_params(notice_date, id)
+        end
+
+        return ps.execute
+      else
+        return false
+      end
+
     rescue => e
       puts e
     end
@@ -97,6 +117,8 @@ notice_date TEXT
         ps = @db.prepare("SELECT * FROM observations")
       elsif type == :notice_date
         ps = @db.prepare("SELECT * FROM observations ORDER BY notice_date")
+      else
+        ps = @db.prepare("SELECT * FROM observations WHERE id = #{type}")
       end
       return ps.execute
     rescue => e

@@ -19,9 +19,9 @@ class Commander < Observer
 
   # Start a process
   def start
-    @model_subject.run
+    #@model_subject.run
     @chatwork_subject.run
-    @model_subject.thread.join
+    #@model_subject.thread.join
   end
 
   # Handles a message
@@ -43,9 +43,10 @@ class Commander < Observer
   # Do a command that get it from ChatWork
   #
   # @param options [String]
-  def do_command(options)
-    command = options[:command].first
-    options = options[:options]
+  def do_command(commands)
+    p commands
+    command = commands[:command].first
+    options = commands[:options]
     if command == 'list'
       list = @db.find(:notice_date)
 
@@ -64,9 +65,43 @@ class Commander < Observer
     elsif command == 'add'
       as_task = options.has_key?(:t) ? 1 : 0
       @db.create('user', options[:n], nil, 1, as_task, options[:d])
-    elsif command == 'delete'
+
+    elsif command == 'delold'
       @db.delete_old
+
     elsif command == 'mod'
+      id = commands[:command][1]
+
+      unless id.nil?
+        # update a name and/or a notice_date?
+        if !options[:n].nil? && !options[:d].nil?
+          @db.update(id, options[:n], options[:d])
+        elsif !options[:n].nil?
+          @db.update(id, options[:n], nil)
+        elsif !options[:d].nil?
+          @db.update(id, nil, options[:d])
+        end
+
+        # update a task?
+        if options[:t] == 'on'
+          @db.update_as_task(id, 1)
+        elsif options[:t] == 'off'
+          @db.update_as_task(id, 0)
+        end
+
+        # update a active?
+        if options[:a] == 'on'
+          @db.update_active(id, 1)
+        elsif options[:a] == 'off'
+          @db.update_active(id, 0)
+        end
+      end
+
+    elsif command == 'del'
+      id = commands[:command][1]
+      unless id.nil?
+        @db.delete(id)
+      end
     end
   end
 

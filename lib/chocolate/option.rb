@@ -22,6 +22,7 @@ class Option
 
       opts = {}
       opt.on('-t [VAL]') { |v| opts[:t] = v }
+      opt.on('-a [VAL]') { |v| opts[:a] = v }
       opt.on('-n VAL') { |v| opts[:n] = v }
       opt.on('-d VAL') { |v| opts[:d] = v }
 
@@ -29,7 +30,7 @@ class Option
       begin
         opt.permute!(options)
 
-        if options.size > 1
+        if options.size > 2
           raise 'Single command only'
         end
 
