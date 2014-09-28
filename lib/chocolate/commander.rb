@@ -63,6 +63,10 @@ class Commander < Observer
       end
 
     elsif command == 'add'
+      if options[:n].nil? || !options.has_key?(:t) || !options.has_key?(:d)
+          return 'Invalid parameters to add'
+      end
+
       as_task = options.has_key?(:t) ? 1 : 0
       @db.create('user', options[:n], nil, 1, as_task, options[:d])
 
