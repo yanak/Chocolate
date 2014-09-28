@@ -48,8 +48,11 @@ class Chatwork
         'X-ChatWorkToken' => @user_info['api_token']
     }
 
-    @get_header_['Cookie'] = cookie
-    @access_token_ = access_token
+    @get_header_['Cookie'] = get_cookie
+
+    token_and_myid = get_token_and_myid
+    @access_token_ = token_and_myid[:token]
+    @myid = token_and_myid[:myid]
 
   end
 
@@ -58,7 +61,7 @@ class Chatwork
   # @param from [Integer] the retrieve second that between a latest message and old messages
   # @return [Array] containing messages as Hash
   def retrieve_messages(from = 10)
-    uri = "/#{@get_url}?#{login_query_string}"
+    uri = "/#{@get_url}?#{get_query_string}"
     lists = []
     @https_.start do
       body = @https_.get(uri, @get_header_).body
@@ -104,7 +107,7 @@ class Chatwork
     return https
   end
 
-  def cookie
+  def get_cookie
     response = ''
     @https_.start do
       #response = @https_.post("/login.php?lang=ja&s=#{@user_info['company']}", "email=#{@user_info['email']}&password=#{@user_info['password']}&login=%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3", @post_header_)
@@ -137,23 +140,26 @@ class Chatwork
     return cookie
   end
 
-  def access_token
+  def get_token_and_myid
     token = ''
     @https_.start do
       body = @https_.get('/', @get_header_).body
       StringIO.open(body, 'rb') do |sio|
         content = Zlib::GzipReader.wrap(sio).read
         token = /ACCESS_TOKEN = '(\w+)'/.match(content)[1]
+        myid = /myid = '(\d+)'/.match(content)[1]
       end
     end
 
-    return token
+    return { token: token,
+             myid: myid,
+    }
   end
 
   def get_query_string
     query = {
         :cmd => 'load_chat',
-        :myid => @user_info['uid'],
+        :myid => @myid,
         :_v => '1.80a',
         :_av => 4,
         :_t => @access_token_,
