@@ -17,4 +17,5 @@ user_info:
   uid:
   # Room ID to observing messages
   room_id:
-
+  # API token
+  api_token:
