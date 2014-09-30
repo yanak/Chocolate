@@ -21,6 +21,7 @@ class Commander < Observer
   def start
     #@model_subject.run
     @chatwork_subject.run
+    @chatwork_subject.thread.join
     #@model_subject.thread.join
   end
 
