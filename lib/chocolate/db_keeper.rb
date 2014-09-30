@@ -28,113 +28,93 @@ notice_date TEXT
 
   # @param [FwrsModel]
   def create(type, name, master_id, active, as_task, notice_date)
-    begin
-      ps = @db.prepare("INSERT INTO observations (type, master_id, name, active, as_task, notice_date) VALUES (?, ?, ?, ?, ?, ?)")
-      ps.bind_params(type, master_id, name, active, as_task, notice_date)
-      return ps.execute
-    rescue => e
-      puts e
-    end
+      sql = 'INSERT INTO observations (type, master_id, name, active, as_task, notice_date) VALUES (?, ?, ?, ?, ?, ?)'
+      return execute(sql, type, master_id, name, active, as_task, notice_date)
   end
 
   def update(id, name, notice_date)
     row = find(id).next_hash
-    begin
+
       if row['type'] == 'user'
-
         if !name.nil? && !notice_date.nil?
-          ps = @db.prepare("UPDATE observations SET name = ?, notice_date = ? WHERE id = ?")
-          ps.bind_params(name, notice_date, id)
+          sql ='UPDATE observations SET name = ?, notice_date = ? WHERE id = ?'
+          return execute(sql, name, notice_date, id)
         elsif !name.nil?
-          ps = @db.prepare("UPDATE observations SET name = ? WHERE id = ?")
-          ps.bind_params(name, id)
+          sql = 'UPDATE observations SET name = ? WHERE id = ?'
+          return execute(sql, name, id)
         elsif !notice_date.nil?
-          ps = @db.prepare("UPDATE observations SET notice_date = ? WHERE id = ?")
-          ps.bind_params(notice_date, id)
+          sql = 'UPDATE observations SET notice_date = ? WHERE id = ?'
+          return execute(sql, notice_date, id)
         end
-
-        return ps.execute
       else
-        return false
+        return :error
       end
 
-    rescue => e
-      puts e
-    end
   end
 
   def delete(id)
-    begin
-      ps = @db.prepare("DELETE FROM observations WHERE id = ?")
-      ps.bind_params(id)
-      return ps.execute
-    rescue => e
-      puts e
-    end
+    sql = 'DELETE FROM observations WHERE id = ?'
+    return execute(sql, id)
   end
 
   def update_active(id, active)
-    begin
-      if !(active == 1 || active == 0)
-        raise 'active value is "1" or "0" only'
-      end
-
-      ps = @db.prepare("UPDATE observations SET active = ? WHERE id = ?")
-      ps.bind_params(active, id)
-      return ps.execute
-    rescue => e
-      puts e
+    unless active == 1 || active == 0
+      raise 'active value is "1" or "0" only'
     end
+    sql = 'UPDATE observations SET active = ? WHERE id = ?'
+    return execute(sql, active, id)
   end
 
   def update_as_task(id, as_task)
-    begin
-      if !(as_task == 1 || as_task == 0)
-        raise 'as_task value is "1" or "0" only'
-      end
-
-      ps = @db.prepare("UPDATE observations SET as_task = ? WHERE id = ?")
-      ps.bind_params(as_task, id)
-      return ps.execute
-    rescue => e
-      puts e
+    unless as_task == 1 || as_task == 0
+      raise 'as_task value is "1" or "0" only'
     end
+    sql = 'UPDATE observations SET as_task = ? WHERE id = ?'
+    return execute(sql, as_task, id)
   end
 
   def find_by_master_id(master_id)
-    begin
-      ps = @db.prepare("SELECT * FROM observations WHERE master_id = ?")
-      ps.bind_params(master_id)
-      return ps.execute
-    rescue => e
-      puts e
-    end
+    sql = 'SELECT * FROM observations WHERE master_id = ?'
+    return execute(sql, master_id)
   end
 
   def find(type)
-    begin
-      if type == :all
-        ps = @db.prepare("SELECT * FROM observations")
-      elsif type == :notice_date
-        ps = @db.prepare("SELECT * FROM observations ORDER BY notice_date")
-      else
-        ps = @db.prepare("SELECT * FROM observations WHERE id = #{type}")
-      end
-      return ps.execute
-    rescue => e
-      puts e
+    if type == :all
+      sql = 'SELECT * FROM observations'
+      return execute(sql)
+    elsif type == :notice_date
+      sql = 'SELECT * FROM observations ORDER BY notice_date'
+      return execute(sql)
+    else
+      sql = 'SELECT * FROM observations WHERE id = ?'
+      return execute(sql, type)
     end
   end
 
   def delete_old
     now = DateTime.parse(Time.now.to_s).strftime('%Y-%m-%d %H:%M:%S')
+    sql = 'DELETE FROM observations WHERE notice_date <= ?'
+    return execute(sql, now)
+  end
+
+  private
+
+  def execute(sql, *args)
     begin
-      ps = @db.prepare("DELETE FROM observations WHERE notice_date <= ?")
-      ps.bind_params(now)
-      return ps.execute
+      ps = @db.prepare(sql)
+      ps.bind_params *args
+      res = ps.execute
+      rows = []
+      while row = res.next_hash
+        rows << row
+      end
     rescue => e
-      puts e
+      raise(e)
+    ensure
+      ps.close
     end
+
+    return rows
   end
 
 end
