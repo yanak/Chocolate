@@ -142,6 +142,7 @@ class Chatwork
 
   def get_token_and_myid
     token = ''
+    myid = ''
     @https_.start do
       body = @https_.get('/', @get_header_).body
       StringIO.open(body, 'rb') do |sio|

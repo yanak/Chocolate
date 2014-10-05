@@ -3,7 +3,7 @@ require 'sqlite3'
 class DBKeeper
 
   def initialize
-    @db = SQLite3::Database.new('../db/chocolate.db')
+    @db = SQLite3::Database.new('db/chocolate.db')
 
     result = @db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='observations'")
     if result.empty?
@@ -35,7 +35,7 @@ notice_date TEXT
   def update(id, name, notice_date)
     row = find(id).next_hash
 
-      if row['type'] == 'user'
+      if !row.nil? && row['type'] == 'user'
         if !name.nil? && !notice_date.nil?
           sql ='UPDATE observations SET name = ?, notice_date = ? WHERE id = ?'
           return execute(sql, name, notice_date, id)
