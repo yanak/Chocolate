@@ -95,12 +95,24 @@ class Chatwork
     return response.code
   end
 
+  def send_message_to_users(message)
+    uri = "v1/rooms/#{@user_info['room_id']}/messages"
+    response = ''
+    body = ''
+
+
+
+    @api_https_.start do
+      response = @api_https_.post(uri, '', @api_header_)
+    end
+  end
+
   private
 
   def create_https(base_url)
     https = Net::HTTP.new(base_url, 443)
     https.use_ssl = true
-    https.ca_file = '../ca/cacert.pem'
+    https.ca_file = 'ca/cacert.pem'
     https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     https.verify_depth = 5
 
@@ -108,6 +120,8 @@ class Chatwork
   end
 
   def get_cookie
+    return @get_header_['Cookie'] unless @get_header_.has_key?('Cookie')
+
     response = ''
     @https_.start do
       #response = @https_.post("/login.php?lang=ja&s=#{@user_info['company']}", "email=#{@user_info['email']}&password=#{@user_info['password']}&login=%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3", @post_header_)
@@ -141,6 +155,8 @@ class Chatwork
   end
 
   def get_token_and_myid
+    return @access_token_ unless @access_token_.empty?
+
     token = ''
     myid = ''
     @https_.start do
