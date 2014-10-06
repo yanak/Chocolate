@@ -32,7 +32,8 @@ class Commander < Observer
     chatwork.messages.each do |message|
       options = Option.parse(message)
       if options.has_key?(:error)
-        p options[:error]
+        # TODO should receive options[:error] as the argument
+        do_command(:error)
       else
         do_command(options)
       end
