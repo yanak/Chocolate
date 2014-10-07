@@ -76,7 +76,7 @@ class Chatwork
     new_message = []
     lists.each do |list|
       if list['tm'] >= Time.now.to_i - from
-        new_message << list
+        new_message << list['msg']
       end
     end
 
@@ -87,7 +87,7 @@ class Chatwork
   #
   # @param message [String]
   # @return [String] status code
-  def create_message(message)
+  def send_message(message)
     uri = "/v1/rooms/#{@user_info['room_id']}/messages?body=#{URI.encode(message)}"
     response = ''
     @api_https_.start do
