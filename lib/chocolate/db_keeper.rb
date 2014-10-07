@@ -33,7 +33,7 @@ notice_date TEXT
   end
 
   def update(id, name, notice_date)
-    row = find(id).next_hash
+    row = find(id).shift
 
       if !row.nil? && row['type'] == 'user'
         if !name.nil? && !notice_date.nil?
@@ -49,7 +49,17 @@ notice_date TEXT
       else
         return :error
       end
+  end
 
+  def update_master(id, name, notice_date)
+    row = find(id).shift
+
+    if !row.nil?
+        sql ='UPDATE observations SET name = ?, notice_date = ? WHERE id = ?'
+        return execute(sql, name, notice_date, id)
+    else
+      return :error
+    end
   end
 
   def delete(id)

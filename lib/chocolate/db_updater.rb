@@ -13,9 +13,7 @@ class DbUpdater < Subject
   def run
     @thread = Thread.start do
       while(true)
-        p 'update'
         update_feature
-        p 'end update'
         sleep(3600)
       end
     end
@@ -39,7 +37,7 @@ class DbUpdater < Subject
         if row.nil?
           db.create('feature', feature[:title], feature[:master_id], 1, 0, notice_date)
         else
-          db.update(row['id'], feature[:title], notice_date)
+          db.update_master(row['id'], feature[:title], notice_date)
         end
       end
     end
