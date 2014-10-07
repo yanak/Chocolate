@@ -75,7 +75,7 @@ class Chatwork
 
     new_message = []
     lists.each do |list|
-      if list['tm'] >= Time.now.to_i - 10
+      if list['tm'] >= Time.now.to_i - from
         new_message << list
       end
     end

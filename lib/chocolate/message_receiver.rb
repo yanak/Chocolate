@@ -15,6 +15,7 @@ class MessageReceiver < Subject
     @thread = Thread.start do
       while(true)
         retrieve_message
+        sleep(5)
       end
     end
   end
@@ -22,7 +23,7 @@ class MessageReceiver < Subject
   private
 
   def retrieve_message
-    messages = @chatwork.retrieve_messages
+    messages = @chatwork.retrieve_messages(5)
 
     messages.each do |message|
       p message
