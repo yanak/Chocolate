@@ -2,9 +2,9 @@ require 'chocolate/subject'
 require 'chocolate/db_keeper'
 require 'chocolate/model/fwrs_factory'
 
-class ModelSubject < Subject
+class DbUpdater < Subject
 
-  attr_accessor :thread
+  attr_reader :thread
 
   def initialize
     super
