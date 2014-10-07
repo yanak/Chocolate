@@ -3,40 +3,73 @@ require 'chocolate/observer'
 require 'chocolate/db_keeper'
 require 'chocolate/model/fwrs_factory'
 require 'chocolate/option'
-require 'chocolate/chatwork_subject'
-require 'chocolate/model_subject'
+require 'chocolate/message_receiver'
+require 'chocolate/db_updater'
+require 'chocolate/chatwork'
+require 'chocolate/event_notifier'
 
 # Chocolate commander
 class Commander < Observer
   include Singleton
 
   def initialize
-    @chatwork_subject = ChatworkSubject.new
-    @chatwork_subject.registerObserver(self)
-    @model_subject = ModelSubject.new
+    @message_receiver = MessageReceiver.new
+    @message_receiver.registerObserver(self)
+
+    @db_updater = DbUpdater.new
+    @db_updater.registerObserver(self)
+
+    @event_notifier = EventNotifier.new
+    @event_notifier.registerObserver(self)
+
     @db = DBKeeper.new
+    @chatwork = Chatwork.instance
   end
 
   # Start a process
   def start
-    #@model_subject.run
-    @chatwork_subject.run
-    @chatwork_subject.thread.join
-    #@model_subject.thread.join
+    @message_receiver.run
+    @event_notifier.run
+    @db_updater.run
+
+    @db_updater.thread.join
+    @event_notifier.thread.join
+    @message_receiver.thread.join
   end
 
   # Handles a message
   #
-  # @param [ChatworkSubject]
+  # @param [MessageReceiver]
   def update(chatwork)
-    chatwork.messages.each do |message|
-      options = Option.parse(message)
-      if options.has_key?(:error)
-        p options[:error]
-      else
-        do_command(options)
+    if chatwork.is_a?(EventNotifier)
+      #events = @db_updater.notifiable_events
+      events = @event_notifier.notifiable_events
+
+      events.each do |event|
+        message = <<-EOM
+#{event['name']} が公開されました。
+公開日時：#{event['notice_date']}
+        EOM
+
+        if event['as_task'] == 1
+          @chatwork.set_task_to_members(message)
+        else
+          @chatwork.send_message_to_members(message)
+        end
+      end
+
+    else
+      chatwork.messages.each do |message|
+        options = Option.parse(message)
+        if options.has_key?(:error)
+          # TODO should receive options[:error] as the argument
+          do_command(:error)
+        else
+          do_command(options)
+        end
       end
     end
+
   end
 
   private
@@ -49,30 +82,37 @@ class Commander < Observer
     command = commands[:command].first
     options = commands[:options]
     if command == 'list'
-      list = @db.find(:notice_date)
+      events = @db.find(:notice_date)
 
       messages = []
-      list.each_hash do |columns|
-        id = columns['id'].to_s
-        type = columns['type'].to_s
-        name = columns['name'].to_s
-        master_id = columns['master_id'].nil? ? '' : "(#{columns['master_id']})"
-        notice_date = columns['notice_date']
-        active = columns['active'] == 1 ? '*' : ' '
-        as_task = columns['as_task'] == 1 ? 'T' : '  '
+      events.each do |row|
+        id = row['id'].to_s
+        type = row['type'].to_s
+        name = row['name'].to_s
+        master_id = row['master_id'].nil? ? '' : "(#{row['master_id']})"
+        notice_date = row['notice_date']
+        active = row['active'] == 1 ? '*' : ' '
+        as_task = row['as_task'] == 1 ? 'T' : '  '
         messages << "#{active} #{as_task} #{master_id} #{name} #{notice_date}"
       end
 
+      @chatwork.send_message(messages.join("\n"))
+
     elsif command == 'add'
       if options[:n].nil? || !options.has_key?(:t) || !options.has_key?(:d)
-          return 'Invalid parameters to add'
+          return @chatwork.send_message('Invalid parameters to add')
       end
 
       as_task = options.has_key?(:t) ? 1 : 0
       @db.create('user', options[:n], nil, 1, as_task, options[:d])
 
+
+      @chatwork.send_message('Register success!')
+
     elsif command == 'delold'
       @db.delete_old
+
+      @chatwork.send_message('Delete Old success!')
 
     elsif command == 'mod'
       id = commands[:command][1]
@@ -100,13 +140,17 @@ class Commander < Observer
         elsif options[:a] == 'off'
           @db.update_active(id, 0)
         end
+
+        @chatwork.send_message('Modify success!')
       end
 
     elsif command == 'del'
       id = commands[:command][1]
       unless id.nil?
         @db.delete(id)
+        @chatwork.send_message('Delete success!')
       end
+
     end
   end
 

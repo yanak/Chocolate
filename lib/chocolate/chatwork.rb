@@ -3,9 +3,10 @@ require 'net/https'
 require 'zlib'
 require 'uri'
 require 'json'
-require 'pp'
+require 'singleton'
 
 class Chatwork
+  include Singleton
 
   def initialize
     @base_url = 'kcw.kddi.ne.jp'
@@ -19,6 +20,7 @@ class Chatwork
     @https_ = create_https(@base_url)
     @api_https_ = create_https('api.chatwork.com')
     @user_info = SyConfig.new('user_info').load
+    @members = SyConfig.new('members').load
 
     @post_header_ = {
         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -73,8 +75,8 @@ class Chatwork
 
     new_message = []
     lists.each do |list|
-      if list['tm'] >= Time.now.to_i - 10
-        new_message << list
+      if list['tm'] >= Time.now.to_i - from
+        new_message << list['msg']
       end
     end
 
@@ -85,7 +87,7 @@ class Chatwork
   #
   # @param message [String]
   # @return [String] status code
-  def create_message(message)
+  def send_message(message)
     uri = "/v1/rooms/#{@user_info['room_id']}/messages?body=#{URI.encode(message)}"
     response = ''
     @api_https_.start do
@@ -95,12 +97,38 @@ class Chatwork
     return response.code
   end
 
+  # Notify a event to specific users who are defined by system configuration
+  #
+  # @param message [String]
+  # @return status code [String]
+  def send_message_to_members(message)
+    response = ''
+    to_list = @members.map do |member|
+      '[To:' + member.to_s + ']'
+    end.join()
+    uri = URI.encode("/v1/rooms/#{@user_info['room_id']}/messages?body=#{to_list}\n#{message}")
+
+    @api_https_.start do
+      response = @api_https_.post(uri, '', @api_header_)
+    end
+  end
+
+  def set_task_to_members(message)
+    response = ''
+    to_list = @members.join(',')
+    uri = URI.encode("/v1/rooms/#{@user_info['room_id']}/tasks?body=#{message}&to_ids=#{to_list}")
+
+    @api_https_.start do
+      response = @api_https_.post(uri, '', @api_header_)
+    end
+  end
+
   private
 
   def create_https(base_url)
     https = Net::HTTP.new(base_url, 443)
     https.use_ssl = true
-    https.ca_file = '../ca/cacert.pem'
+    https.ca_file = File.expand_path('../../../ca/cacert.pem', __FILE__)
     https.verify_mode = OpenSSL::SSL::VERIFY_PEER
     https.verify_depth = 5
 
@@ -108,6 +136,8 @@ class Chatwork
   end
 
   def get_cookie
+    return @get_header_['Cookie'] if @get_header_.has_key?('Cookie')
+
     response = ''
     @https_.start do
       #response = @https_.post("/login.php?lang=ja&s=#{@user_info['company']}", "email=#{@user_info['email']}&password=#{@user_info['password']}&login=%E3%83%AD%E3%82%B0%E3%82%A4%E3%83%B3", @post_header_)
@@ -141,6 +171,8 @@ class Chatwork
   end
 
   def get_token_and_myid
+    return @access_token_ unless @access_token_.empty?
+
     token = ''
     myid = ''
     @https_.start do

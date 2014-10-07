@@ -3,7 +3,7 @@ require 'sqlite3'
 class DBKeeper
 
   def initialize
-    @db = SQLite3::Database.new('db/chocolate.db')
+    @db = SQLite3::Database.new(File.expand_path('../../../db/chocolate.db', __FILE__))
 
     result = @db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='observations'")
     if result.empty?
@@ -33,7 +33,7 @@ notice_date TEXT
   end
 
   def update(id, name, notice_date)
-    row = find(id).next_hash
+    row = find(id).shift
 
       if !row.nil? && row['type'] == 'user'
         if !name.nil? && !notice_date.nil?
@@ -49,7 +49,17 @@ notice_date TEXT
       else
         return :error
       end
+  end
 
+  def update_master(id, name, notice_date)
+    row = find(id).shift
+
+    if !row.nil?
+        sql ='UPDATE observations SET name = ?, notice_date = ? WHERE id = ?'
+        return execute(sql, name, notice_date, id)
+    else
+      return :error
+    end
   end
 
   def delete(id)
@@ -78,6 +88,16 @@ notice_date TEXT
     return execute(sql, master_id)
   end
 
+  # Finds notifiable events
+  # Range: between [current-time] and [current-time + 10 second]
+  def find_events
+    from = DateTime.parse(Time.now.to_s).strftime('%Y-%m-%d %H:%M:%S')
+    # FIXME time
+    to = DateTime.parse((Time.now + 10).to_s).strftime('%Y-%m-%d %H:%M:%S')
+    sql = "SELECT * FROM observations WHERE notice_date BETWEEN '#{from}' AND '#{to}' AND active = 1"
+    return execute(sql)
+  end
+
   def find(type)
     if type == :all
       sql = 'SELECT * FROM observations'
@@ -102,7 +122,7 @@ notice_date TEXT
   def execute(sql, *args)
     begin
       ps = @db.prepare(sql)
-      ps.bind_params *args
+      ps.bind_params *args unless args.empty?
       res = ps.execute
       rows = []
       while row = res.next_hash
