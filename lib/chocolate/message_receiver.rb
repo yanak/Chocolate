@@ -26,9 +26,8 @@ class MessageReceiver < Subject
     messages = @chatwork.retrieve_messages(5)
 
     messages.each do |message|
-      p message
       if (message =~ /^choco/) == 0
-        @messages = [raw_command.match(/^choco (.*)/)[1]]
+        @messages = [message.match(/^choco (.*)/)[1]]
         notifyObservers
       end
     end
