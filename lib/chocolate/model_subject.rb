@@ -35,7 +35,7 @@ class ModelSubject < Subject
     features.each do |feature|
       rows = db.find_by_master_id(feature[:master_id])
       feature[:notice_date].each do |notice_date|
-        row = rows.next_hash
+        row = rows.shift
         if row.nil?
           db.create('feature', feature[:title], feature[:master_id], 1, 0, notice_date)
         else
@@ -43,9 +43,7 @@ class ModelSubject < Subject
         end
       end
     end
-
-    #db.close
-    #notifyObservers
+    db.close
   end
 
 end
