@@ -92,8 +92,9 @@ notice_date TEXT
   # Range: between [current-time] and [current-time + 10 second]
   def find_events
     from = DateTime.parse(Time.now.to_s).strftime('%Y-%m-%d %H:%M:%S')
-    to = DateTime.parse((Time.now + 10000).to_s).strftime('%Y-%m-%d %H:%M:%S')
-    sql = "SELECT * FROM observations WHERE notice_date BETWEEN '#{from}' AND '#{to}'"
+    # FIXME time
+    to = DateTime.parse((Time.now + 10).to_s).strftime('%Y-%m-%d %H:%M:%S')
+    sql = "SELECT * FROM observations WHERE notice_date BETWEEN '#{from}' AND '#{to}' AND active = 1"
     return execute(sql)
   end
 
