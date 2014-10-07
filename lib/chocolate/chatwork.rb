@@ -113,6 +113,16 @@ class Chatwork
     end
   end
 
+  def set_task_to_members(message)
+    response = ''
+    to_list = @members.join(',')
+    uri = URI.encode("/v1/rooms/#{@user_info['room_id']}/tasks?body=#{message}&to_ids=#{to_list}")
+
+    @api_https_.start do
+      response = @api_https_.post(uri, '', @api_header_)
+    end
+  end
+
   private
 
   def create_https(base_url)
