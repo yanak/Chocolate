@@ -29,7 +29,7 @@ class EventNotifier < Subject
 
       notifiable_events.each do |event|
         # Deactivate a event
-        #db.update_active(event['id'], 0)
+        db.update_active(event['id'], 0)
       end
 
       notifyObservers
