@@ -22,16 +22,16 @@ class DbUpdater < Subject
   private
 
   # Update feature
-  def update_feature
+  def update_observation(table)
     master = Model::FwrsFactory.new.create
-    features = master.find_feature
+    obs = master.find_notifiable_observations(table)
     master.close
 
     # insert rows if master_id does not exist
     # update rows if master_id exist
     db = DBKeeper.new
-    features.each do |feature|
-      rows = db.find_by_master_id(feature[:master_id])
+    obs.each do |feature|
+      rows = db.find_by_master_id(table, feature[:master_id])
       feature[:notice_date].each do |notice_date|
         row = rows.shift
         if row.nil?

@@ -83,7 +83,7 @@ notice_date TEXT
     return execute(sql, as_task, id)
   end
 
-  def find_by_master_id(master_id)
+  def find_by_master_id(type, master_id)
     sql = 'SELECT * FROM observations WHERE master_id = ?'
     return execute(sql, master_id)
   end
